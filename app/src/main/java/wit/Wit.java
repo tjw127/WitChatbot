@@ -39,7 +39,7 @@ public class Wit{
         }
 
         public Builder entity_id(String id){
-            
+
             this.urlMap.put(2, id);
             return this;
         }
@@ -71,15 +71,36 @@ public class Wit{
 
         @Override
         public Object build() {
+
             Set urlMapSet = this.urlMap.entrySet();
+
             StringBuilder urlBuilder = new StringBuilder();
+
             urlBuilder.append(Base.wit_base_url);
+
             Iterator iterator = urlMapSet.iterator();
+
+            int param_counter = 0;
+
             while (iterator.hasNext()){
+
+                param_counter += 1;
+
                 Map.Entry urlMapEntry = (Map.Entry) iterator.next();
-                urlBuilder.append(urlMapEntry.getValue());
+
+                if (urlMapSet.size() != param_counter){
+
+                    urlBuilder.append("/" + urlMapEntry.getValue());
+
+                } else {
+
+                    urlBuilder.append(urlMapEntry.getValue());
+                }
+
             }
+
             this.url = urlBuilder.toString();
+
             return new Wit(this);
         }
     }
