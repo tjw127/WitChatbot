@@ -15,7 +15,7 @@ public class Wit{
     public String url;
     public String arguments;
 
-    public class ArgumentsBuilder implements wit.Builder<Object>{
+    public static class ArgumentsBuilder implements wit.Builder<Object>{
 
         HashMap<String, String> params;
 
@@ -96,7 +96,7 @@ public class Wit{
             return new Wit(this);
         }
     }
-    public class EndpointsBuilder implements wit.Builder<Object> {
+    public static class EndpointsBuilder implements wit.Builder<Object> {
 
         TreeMap urlMap = null;
         String url = null;
@@ -172,7 +172,8 @@ public class Wit{
 
                 Map.Entry urlMapEntry = (Map.Entry) iterator.next();
 
-                if (urlMapSet.size() != param_counter){
+
+                if (urlMapSet.size() != param_counter || urlMapSet.size() == 1){
 
                     urlBuilder.append("/");
                     urlBuilder.append(urlMapEntry.getValue());
