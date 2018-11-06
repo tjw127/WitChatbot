@@ -2,6 +2,7 @@ package wit;
 
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -12,57 +13,140 @@ import url.Base;
 public class Wit{
 
     public String url;
-    public class Builder implements wit.Builder<Object> {
+    public String arguments;
+
+    public class ArgumentsBuilder implements wit.Builder<Object>{
+
+        HashMap<String, String> params;
+
+        String arguments = null;
+
+        ArgumentsBuilder(){
+            params = new HashMap<String, String>();
+        }
+
+        public ArgumentsBuilder q(String value){
+
+            this.params.put("q", value);
+
+            return this;
+        }
+
+        public ArgumentsBuilder context(String value){
+
+            this.params.put("context", value);
+
+            return this;
+        }
+
+        public ArgumentsBuilder msg_id(String value){
+
+            this.params.put("msg_id", value);
+
+            return this;
+        }
+
+        public ArgumentsBuilder thread_id(String value){
+
+            this.params.put("thread_id", value);
+
+            return this;
+        }
+
+        public ArgumentsBuilder v(String value){
+
+            this.params.put("v", value);
+
+            return this;
+        }
+
+        public ArgumentsBuilder n(String value){
+
+            this.params.put("n", value);
+
+            return this;
+        }
+        @Override
+        public Object build() {
+
+            StringBuilder argsStringBuilder = new StringBuilder();
+
+            int args_counter = 0;
+
+            for (Map.Entry entry : this.params.entrySet()){
+
+                args_counter += 1;
+
+                if (args_counter != this.params.size()){
+
+                    String key_value = entry.getKey().toString() + "=" + entry.getValue().toString();
+
+                    argsStringBuilder.append(key_value);
+                    argsStringBuilder.append( "&");
+
+                }else {
+
+                    String key_value = entry.getKey().toString() + "=" + entry.getValue().toString();
+
+                    argsStringBuilder.append(key_value);
+                }
+
+                this.arguments = argsStringBuilder.toString();
+            }
+            return new Wit(this);
+        }
+    }
+    public class EndpointsBuilder implements wit.Builder<Object> {
 
         TreeMap urlMap = null;
         String url = null;
-        public Builder (){
+        public EndpointsBuilder (){
 
             urlMap = new TreeMap<Integer, String>();
         }
 
-        public Builder message(){
+        public EndpointsBuilder message(){
 
             this.urlMap.put(1, "message");
             return this;
         }
 
-        public Builder speech(){
+        public EndpointsBuilder speech(){
             this.urlMap.put(1, "speech");
             return this;
         }
 
-        public Builder entities(){
+        public EndpointsBuilder entities(){
 
             this.urlMap.put(1, "entities");
             return this;
         }
 
-        public Builder entity_id(String id){
+        public EndpointsBuilder entity_id(String id){
 
             this.urlMap.put(2, id);
             return this;
         }
 
-        public Builder values(){
+        public EndpointsBuilder values(){
 
             this.urlMap.put(3, "values");
             return this;
         }
 
-        public Builder expressions(){
+        public EndpointsBuilder expressions(){
 
             this.urlMap.put(5, "expressions");
             return this;
         }
 
-        public Builder value_id(String value_id){
+        public EndpointsBuilder value_id(String value_id){
 
             this.urlMap.put(4, value_id);
             return this;
         }
 
-        public Builder apps(){
+        public EndpointsBuilder apps(){
 
             this.urlMap.put(1, "apps");
             return this;
@@ -90,7 +174,8 @@ public class Wit{
 
                 if (urlMapSet.size() != param_counter){
 
-                    urlBuilder.append("/" + urlMapEntry.getValue());
+                    urlBuilder.append("/");
+                    urlBuilder.append(urlMapEntry.getValue());
 
                 } else {
 
@@ -105,10 +190,22 @@ public class Wit{
         }
     }
 
-    private Wit(Builder builder){
+    private Wit(EndpointsBuilder builder){
         try {
 
             this.url = builder.url;
+        }catch (NullPointerException e){
+            Log.d("Wit.java Error", e.getLocalizedMessage());
+        }
+
+    }
+
+    private Wit(ArgumentsBuilder argumentsBuilder){
+
+        try{
+
+            this.arguments = argumentsBuilder.arguments;
+
         }catch (NullPointerException e){
             Log.d("Wit.java Error", e.getLocalizedMessage());
         }
