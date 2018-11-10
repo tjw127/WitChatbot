@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Wit wit = (Wit)new Wit.EndpointsBuilder().message().build();
+        Wit wit = (Wit)new Wit.EndpointsBuilder().entity_id("3677483848").entities().build();
         Log.v("Wit.java", wit.url);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
