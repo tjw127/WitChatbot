@@ -5,12 +5,19 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import url.Base;
 import wit.chatbot_api_request.ApiRequest;
 
@@ -18,17 +25,21 @@ public class Wit{
 
     public String url;
     public String arguments;
+    public String request_body;
 
-    public static class JSONArgumentsBuilder implements wit.Builder<Object> {
+    public static class RequestBodyBuilder implements wit.Builder<Object> {
 
         JSONObject jsonObject;
 
-        JSONArgumentsBuilder()
+        private String request_body;
+
+        RequestBodyBuilder()
         {
             jsonObject = new JSONObject();
+
         }
 
-        public JSONArgumentsBuilder id(String id){
+        public RequestBodyBuilder id(String id){
             try {
                 this.jsonObject.put("id", id);
             } catch (JSONException e) {
@@ -38,7 +49,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder doc(String doc){
+        public RequestBodyBuilder doc(String doc){
             try {
                 this.jsonObject.put("doc", doc);
             } catch (JSONException e) {
@@ -48,7 +59,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder lookups(String array){
+        public RequestBodyBuilder lookups(String array){
             try {
                 this.jsonObject.put("lookups", array);
             } catch (JSONException e) {
@@ -58,7 +69,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder values(String values){
+        public RequestBodyBuilder values(String values){
             try {
                 this.jsonObject.put("values", values);
             } catch (JSONException e) {
@@ -68,7 +79,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder expression(String expression){
+        public RequestBodyBuilder expression(String expression){
             try {
                 this.jsonObject.put("expression", expression);
             } catch (JSONException e) {
@@ -78,7 +89,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder expressions(String array){
+        public RequestBodyBuilder expressions(String array){
             try {
                 this.jsonObject.put("expressions", array);
             } catch (JSONException e) {
@@ -88,7 +99,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder metadata(String data){
+        public RequestBodyBuilder metadata(String data){
             try {
                 this.jsonObject.put("metadata", data);
             } catch (JSONException e) {
@@ -98,7 +109,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder text(String text){
+        public RequestBodyBuilder text(String text){
             try {
                 this.jsonObject.put("text", text);
             } catch (JSONException e) {
@@ -108,7 +119,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder entities(String array){
+        public RequestBodyBuilder entities(String array){
             try {
                 this.jsonObject.put("entities", array);
             } catch (JSONException e) {
@@ -118,7 +129,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder name(String name){
+        public RequestBodyBuilder name(String name){
             try {
                 this.jsonObject.put("name", name);
             } catch (JSONException e) {
@@ -128,7 +139,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder lang(String lang){
+        public RequestBodyBuilder lang(String lang){
             try {
                 this.jsonObject.put("lang", lang);
             } catch (JSONException e) {
@@ -138,7 +149,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder private_arg(String value){
+        public RequestBodyBuilder private_arg(String value){
             try {
                 this.jsonObject.put("private", value);
             } catch (JSONException e) {
@@ -148,7 +159,7 @@ public class Wit{
             return this;
         }
 
-        public JSONArgumentsBuilder desc(String value){
+        public RequestBodyBuilder desc(String value){
             try {
                 this.jsonObject.put("desc", value);
             } catch (JSONException e) {
@@ -161,7 +172,10 @@ public class Wit{
 
         @Override
         public Object build() {
-            return null;
+
+            this.request_body = this.jsonObject.toString();
+
+            return new Wit(this);
         }
     }
 
@@ -251,35 +265,97 @@ public class Wit{
     public static class RequestBuilder implements ApiRequest {
 
         private JSONObject requestObject;
+
+        private TreeMap<Integer, MediaType> mediaTypeTreeMap;
+
+        private HashMap<String, String> headers;
+
+        private MediaType JSON
+                = MediaType.parse("application/json; charset=utf-8");
+
+        private MediaType XML
+                = MediaType.parse("application/xml; charset=utf-8");
+
+        private String url;
+
+        private String response_string;
+
+        private OkHttpClient client;
+
         RequestBuilder(){
 
             requestObject = new JSONObject();
+
+            mediaTypeTreeMap = new TreeMap<Integer, MediaType>();
+
+            headers = new HashMap<String, String>();
+
+            client = new OkHttpClient();
         }
 
         public RequestBuilder authorization(String bearer_token){
 
             try {
-                this.requestObject.put("Authorization", " Bearer " + bearer_token);
-            } catch (JSONException e) {
+
+                this.headers.put("Authorization", "Bearer " + bearer_token);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return this;
         }
+
+        public RequestBuilder json(){
+
+            try {
+
+                this.mediaTypeTreeMap.put(1, JSON);
+
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
+        public RequestBuilder xml(){
+
+            try {
+
+                this.mediaTypeTreeMap.put(1, XML);
+
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
 
         public RequestBuilder content_type(String type){
 
             try {
-                this.requestObject.put("Content-Type", type);
-            } catch (JSONException e) {
+                this.headers.put("Content-Type", type);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return this;
         }
 
-        public RequestBuilder json_arguments(String json){
+        public RequestBuilder url(String url, String args){
+
+            this.url = url;
+
+            if (args != null){
+
+                this.url += args;
+            }
+
+            return this;
+        }
+
+        public RequestBuilder request_body(String json){
 
             try {
-                this.requestObject.put("arguments", json);
+                this.requestObject.put("request_body", json);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -287,13 +363,74 @@ public class Wit{
         }
         @Override
         public Object request() {
-            return null;
+
+            RequestBody body = null;
+             try {
+
+                 if (this.requestObject.has("request_body")) {
+
+                     body = RequestBody.create(this.mediaTypeTreeMap.firstEntry().getValue(), this.requestObject.getString("request_body"));
+
+                 }
+
+             }catch (Exception e){
+
+                e.printStackTrace();
+             }
+
+            Request.Builder request_builder = new Request.Builder();
+
+            try {
+
+                request_builder.url(url);
+
+            }catch(NullPointerException e){
+
+                e.printStackTrace();
+            }
+
+            for (Map.Entry entry : this.headers.entrySet()){
+
+                request_builder.header(entry.getKey().toString(), entry.getValue().toString());
+            }
+
+            if (body != null){
+
+                request_builder.post(body);
+            }
+
+
+            Request request = request_builder.build();
+
+            Response response = null;
+
+            try {
+
+                response = client.newCall(request).execute();
+
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+
+            try {
+
+                this.response_string = response.body().string();
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+            }
+
+            return new Wit(this);
         }
     }
     public static class EndpointsBuilder implements wit.Builder<Object> {
 
-        TreeMap urlMap = null;
+        TreeMap<Integer, String> urlMap;
+
         String url = null;
+
         public EndpointsBuilder (){
 
             urlMap = new TreeMap<Integer, String>();
@@ -347,9 +484,6 @@ public class Wit{
             return this;
         }
 
-
-
-
         public EndpointsBuilder value_id(String value_id){
 
             this.urlMap.put(4, value_id);
@@ -362,7 +496,6 @@ public class Wit{
             return this;
         }
 
-
         @Override
         public Object build() {
 
@@ -374,11 +507,7 @@ public class Wit{
 
             Iterator iterator = urlMapSet.iterator();
 
-            int param_counter = 0;
-
             while (iterator.hasNext()){
-
-                param_counter += 1;
 
                 Map.Entry urlMapEntry = (Map.Entry) iterator.next();
 
@@ -413,6 +542,28 @@ public class Wit{
             Log.d("Wit.java Error", e.getLocalizedMessage());
         }
 
+    }
+
+    private Wit(RequestBodyBuilder requestBodyBuilder){
+
+        try{
+
+            this.request_body = requestBodyBuilder.request_body;
+
+        }catch (NullPointerException e){
+            Log.d("Wit.java Error", e.getLocalizedMessage());
+        }
+
+    }
+
+    private Wit(RequestBuilder requestBuilder){
+
+        try{
+            Log.v("RequestBuilder", "Success" + requestBuilder.requestObject.toString());
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 
